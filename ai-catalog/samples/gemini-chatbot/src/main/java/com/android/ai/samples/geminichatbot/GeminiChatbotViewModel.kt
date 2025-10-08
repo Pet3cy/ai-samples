@@ -17,6 +17,7 @@ package com.android.ai.samples.geminichatbot
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.ai.uicomponent.ChatMessage
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
@@ -91,7 +92,7 @@ class GeminiChatbotViewModel @Inject constructor() : ViewModel() {
                         timestamp = System.currentTimeMillis(),
                         isIncoming = true,
                     )
-                } ?: error("Model returned an empty response") // This error will be caught by the try/catch
+                } ?: error("Model returned an empty response")
 
                 _uiState.update {
                     it.copy(messages = listOf(newMessage) + it.messages, geminiMessageState = GeminiMessageState.WaitingForMessage)

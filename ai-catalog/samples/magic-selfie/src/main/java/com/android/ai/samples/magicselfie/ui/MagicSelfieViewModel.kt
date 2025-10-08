@@ -45,4 +45,8 @@ class MagicSelfieViewModel @Inject constructor(private val magicSelfieRepository
             }
         }
     }
+
+    fun resetError() {
+        _uiState.value = MagicSelfieUiState.Initial
+    }
 }

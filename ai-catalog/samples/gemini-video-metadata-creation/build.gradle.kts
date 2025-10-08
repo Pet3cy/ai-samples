@@ -53,7 +53,7 @@ android {
 }
 
 dependencies {
-
+    implementation(project(":ui-component"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
@@ -61,7 +61,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
-    implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.material3)
     implementation(libs.firebase.common.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.ui.tooling.preview.android)

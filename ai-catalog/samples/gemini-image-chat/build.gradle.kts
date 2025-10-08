@@ -65,10 +65,13 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
-    implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.material3)
     implementation(libs.coil.compose)
     implementation(libs.androidx.exifinterface)
     ksp(libs.hilt.compiler)
+    implementation(libs.ui.tooling.preview)
+
+    implementation(project(":ui-component"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

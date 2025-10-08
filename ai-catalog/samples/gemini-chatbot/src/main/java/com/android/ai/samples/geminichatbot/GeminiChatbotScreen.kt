@@ -15,103 +15,116 @@
  */
 package com.android.ai.samples.geminichatbot
 
-import android.content.Intent
-import androidx.compose.foundation.layout.Arrangement
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Code
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.ai.theme.AISampleCatalogTheme
+import com.android.ai.uicomponent.ChatMessage
+import com.android.ai.uicomponent.GenerateButton
+import com.android.ai.uicomponent.MessageList
+import com.android.ai.uicomponent.SampleDetailTopAppBar
+import com.android.ai.uicomponent.TextInput
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeminiChatbotScreen(viewModel: GeminiChatbotViewModel = hiltViewModel()) {
-    val topAppBarState = rememberTopAppBarState()
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topAppBarState)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var message by rememberSaveable { mutableStateOf("") }
+
+    GeminiChatbotScreen(
+        uiState = uiState,
+        onSendMessage = {
+            viewModel.sendMessage(it)
+        },
+        onDismissError = viewModel::dismissError,
+    )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+private fun GeminiChatbotScreen(uiState: GeminiChatbotUiState, onSendMessage: (String) -> Unit, onDismissError: () -> Unit) {
+    val topAppBarState = rememberTopAppBarState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
             .imePadding(),
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            TopAppBar(
-                colors = topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
-                title = {
-                    Text(text = stringResource(id = R.string.geminichatbot_title_bar))
-                },
-                actions = {
-                    SeeCodeButton()
-                },
+            SampleDetailTopAppBar(
+                sampleName = stringResource(R.string.geminichatbot_title),
+                sampleDescription = stringResource(R.string.geminichatbot_description),
+                sourceCodeUrl = "https://github.com/android/ai-samples/tree/main/ai-catalog/samples/gemini-chatbot",
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                onBackClick = { backDispatcher?.onBackPressed() },
+                topAppBarState = topAppBarState,
+                scrollBehavior = scrollBehavior,
             )
         },
     ) { innerPadding ->
-        Column {
+        Box(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
             MessageList(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .weight(1f),
+                    .widthIn(max = 646.dp)
+                    .fillMaxSize()
+                    .padding(start = 16.dp, end = 16.dp),
                 messages = uiState.messages,
-                contentPadding = innerPadding,
             )
 
             when (val state = uiState.geminiMessageState) {
                 is GeminiMessageState.Generating -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .align(Alignment.CenterHorizontally),
+                    ContainedLoadingIndicator(
+                        modifier = Modifier.size(60.dp)
+                            .align(Alignment.Center),
+                        indicatorColor = MaterialTheme.colorScheme.tertiary,
                     )
                 }
 
                 is GeminiMessageState.Error -> {
                     AlertDialog(
-                        onDismissRequest = { viewModel.dismissError() },
+                        onDismissRequest = onDismissError,
                         title = { Text(text = stringResource(R.string.error)) },
                         text = { Text(text = state.errorMessage) },
                         confirmButton = {
-                            Button(onClick = { viewModel.dismissError() }) {
+                            Button(onClick = onDismissError) {
                                 Text(text = stringResource(R.string.dismiss_button))
                             }
                         },
@@ -120,78 +133,56 @@ fun GeminiChatbotScreen(viewModel: GeminiChatbotViewModel = hiltViewModel()) {
                 else -> { /* No additional UI for waiting state */ }
             }
 
-            InputBar(
-                value = message,
+            val textFieldState = rememberTextFieldState()
+            TextInput(
+                state = textFieldState,
                 placeholder = stringResource(R.string.geminichatbot_input_placeholder),
-                onInputChanged = {
-                    message = it
+                primaryButton = {
+                    GenerateButton(
+                        icon = painterResource(id = com.android.ai.uicomponent.R.drawable.ic_ai_send),
+                        modifier = Modifier
+                            .width(72.dp)
+                            .height(55.dp)
+                            .padding(4.dp),
+                        enabled = uiState.geminiMessageState !is GeminiMessageState.Generating,
+                        onClick = {
+                            onSendMessage(textFieldState.text.toString())
+                            textFieldState.setTextAndPlaceCursorAtEnd("")
+                        },
+                    )
                 },
-                onSendClick = {
-                    viewModel.sendMessage(message)
-                    message = ""
-                },
-                sendEnabled = uiState.geminiMessageState !is GeminiMessageState.Generating,
+                modifier = Modifier
+                    .padding(10.dp)
+                    .align(Alignment.BottomCenter)
+                    .widthIn(max = 646.dp)
+                    .fillMaxWidth(),
             )
         }
     }
 }
 
+@PreviewScreenSizes
 @Composable
-fun MessageList(messages: List<ChatMessage>, contentPadding: PaddingValues, modifier: Modifier = Modifier) {
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = contentPadding,
-        reverseLayout = true,
-        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
-    ) {
-        items(items = messages) { message ->
-            MessageBubble(
-                message = message,
-            )
-        }
-    }
-}
-
-@Composable
-fun MessageBubble(message: ChatMessage, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxWidth(),
-        contentAlignment = if (message.isIncoming) Alignment.CenterStart else Alignment.CenterEnd,
-    ) {
-        Surface(
-            modifier = Modifier.widthIn(max = 300.dp),
-            color = if (message.isIncoming) {
-                MaterialTheme.colorScheme.secondaryContainer
-            } else {
-                MaterialTheme.colorScheme.primary
-            },
-            shape = MaterialTheme.shapes.large,
-        ) {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = message.text,
-            )
-        }
-    }
-}
-
-@Composable
-fun SeeCodeButton() {
-    val context = LocalContext.current
-    val githubLink = "https://github.com/android/ai-samples/tree/main/ai-catalog/samples/gemini-chatbot"
-
-    Button(
-        onClick = {
-            val intent = Intent(Intent.ACTION_VIEW, githubLink.toUri())
-            context.startActivity(intent)
-        },
-        modifier = Modifier.padding(end = 8.dp),
-    ) {
-        Icon(Icons.Filled.Code, contentDescription = "See code")
-        Text(
-            modifier = Modifier.padding(start = 8.dp),
-            fontSize = 12.sp,
-            text = stringResource(R.string.see_code),
+@OptIn(ExperimentalMaterial3Api::class)
+private fun GeminiChatbotScreenPreview() {
+    AISampleCatalogTheme {
+        GeminiChatbotScreen(
+            uiState = GeminiChatbotUiState(
+                messages = listOf(
+                    ChatMessage(
+                        "Hi there!",
+                        timestamp = 124,
+                        isIncoming = true,
+                    ),
+                    ChatMessage(
+                        "I’m super sleepy today, what coffee drink has the most caffeine, but not too much. Also something hot.",
+                        timestamp = 123,
+                        isIncoming = false,
+                    ),
+                ),
+            ),
+            onSendMessage = {},
+            onDismissError = {},
         )
     }
 }
