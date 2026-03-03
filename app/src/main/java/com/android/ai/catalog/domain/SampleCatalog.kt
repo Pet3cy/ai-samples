@@ -31,13 +31,26 @@ import com.android.ai.samples.geminivideosummary.ui.VideoSummarizationScreen
 import com.android.ai.samples.genai_image_description.GenAIImageDescriptionScreen
 import com.android.ai.samples.genai_summarization.GenAISummarizationScreen
 import com.android.ai.samples.genai_writing_assistance.GenAIWritingAssistanceScreen
+import com.android.ai.samples.geminihybrid.GeminiHybridScreen
 import com.android.ai.samples.imagen.ui.ImagenScreen
 import com.android.ai.samples.imagenediting.ui.ImagenEditingScreen
 import com.android.ai.samples.magicselfie.ui.MagicSelfieScreen
 import com.android.ai.theme.extendedColorScheme
+import com.google.firebase.ai.type.PublicPreviewAPI
 
+@OptIn(PublicPreviewAPI::class)
 @RequiresPermission(Manifest.permission.RECORD_AUDIO)
 val sampleCatalog = listOf(
+    SampleCatalogItem(
+        title = R.string.gemini_hybrid_sample_list_title,
+        description = R.string.gemini_hybrid_sample_list_description,
+        route = "GeminiHybridScreen",
+        sampleEntryScreen = { GeminiHybridScreen() },
+        tags = listOf(SampleTags.GEMINI_NANO, SampleTags.GEMINI_FLASH, SampleTags.ML_KIT, SampleTags.FIREBASE),
+        needsFirebase = true,
+        keyArt = R.drawable.img_keyart_text,
+        isFeatured = true,
+    ),
     SampleCatalogItem(
         title = R.string.gemini_image_chat_list_title,
         description = R.string.gemini_image_chat_list_description,
@@ -56,7 +69,6 @@ val sampleCatalog = listOf(
         tags = listOf(SampleTags.IMAGEN, SampleTags.FIREBASE),
         needsFirebase = true,
         keyArt = R.drawable.img_keyart_imagen,
-        isFeatured = true,
     ),
     SampleCatalogItem(
         title = R.string.gemini_multimodal_sample_list_title,
